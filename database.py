@@ -36,15 +36,6 @@ with sqlite3.connect("restaurant.db") as conn:
         )
     """)
 
-    cursor.execute("""CREATE TABLE reviews (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    order_id INTEGER,
-    client_login TEXT,
-    rating INTEGER,
-    review_text TEXT,
-    FOREIGN KEY (order_id) REFERENCES orders(id)
-            )
-        """)
     # Добавление тестовых данных
     try:
         # Пользователи
