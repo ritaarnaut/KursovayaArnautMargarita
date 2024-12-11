@@ -10,7 +10,12 @@ with sqlite3.connect("restaurant.db") as conn:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             login TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            role TEXT NOT NULL CHECK (role IN ('admin', 'waiter', 'client'))
+            role TEXT NOT NULL CHECK (role IN ('admin', 'waiter', 'client')),
+            first_name TEXT,
+            last_name TEXT,
+            phone TEXT,
+            birth_date TEXT,
+            email TEXT
         )
     """)
 
@@ -33,6 +38,18 @@ with sqlite3.connect("restaurant.db") as conn:
             total_price REAL NOT NULL CHECK (total_price >= 0),
             status TEXT NOT NULL CHECK (status IN ('active', 'completed')),
             FOREIGN KEY (client_login) REFERENCES users (login) ON DELETE CASCADE
+        )
+    """)
+
+    # Таблица отзывов
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS reviews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER,
+            client_login TEXT,
+            rating INTEGER,
+            review_text TEXT,
+            FOREIGN KEY(order_id) REFERENCES orders(id)
         )
     """)
 
@@ -69,3 +86,4 @@ with sqlite3.connect("restaurant.db") as conn:
         pass
 
     print("База данных успешно создана и инициализирована.")
+

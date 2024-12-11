@@ -84,6 +84,10 @@ def open_take_order_window():
     menu_list = tk.Listbox(order_win, width=50, height=10)
     menu_list.pack(pady=10)
 
+    # Список собранного заказа
+    order_details_list = tk.Listbox(order_win, width=50, height=10)
+    order_details_list.pack(pady=10)
+
     def load_menu(search_query=None):
         """Загрузка меню."""
         menu_list.delete(0, tk.END)
@@ -122,8 +126,8 @@ def open_take_order_window():
     client_login_entry = tk.Entry(order_win, width=30)
     client_login_entry.pack(pady=5)
 
-    def place_order():
-        """Функция для принятия заказа."""
+    def add_to_order():
+        """Добавление блюда в заказ."""
         selected = menu_list.curselection()
         if not selected:
             messagebox.showwarning("Ошибка", "Выберите блюдо из меню.")
@@ -132,22 +136,40 @@ def open_take_order_window():
         dish_name = selected_item.split(" - ")[0]
         price = float(selected_item.split(" - ")[1].split()[0])
         portions = portion_entry.get()
-        client_login = client_login_entry.get()
 
         if not portions.isdigit() or int(portions) <= 0:
             messagebox.showerror("Ошибка", "Введите корректное количество порций.")
             return
+
+        order_details_list.insert(tk.END, f"{dish_name} x{portions} - {price * int(portions)} руб.")
+
+    def place_order():
+        """Функция для принятия заказа."""
+        client_login = client_login_entry.get()
+
         if not client_login:
             messagebox.showerror("Ошибка", "Введите логин клиента.")
             return
 
-        total_price = price * int(portions)
+        order_details = []
+        total_price = 0
+        for item in order_details_list.get(0, tk.END):
+            dish_name = item.split(" x")[0]
+            portions = item.split(" x")[1].split(" -")[0]
+            price = float(item.split(" - ")[1].split()[0])
+            order_details.append(f"{dish_name} x{portions}")
+            total_price += price
+
+        if not order_details:
+            messagebox.showwarning("Ошибка", "Добавьте хотя бы одно блюдо в заказ.")
+            return
+
         try:
             with sqlite3.connect("restaurant.db") as conn:
                 cursor = conn.cursor()
                 cursor.execute(
                     "INSERT INTO orders (client_login, order_details, total_price, status) VALUES (?, ?, ?, ?)",
-                    (client_login, f"{dish_name} x{portions}", total_price, "active")
+                    (client_login, ', '.join(order_details), total_price, "active")
                 )
                 conn.commit()
                 messagebox.showinfo("Успех", "Заказ успешно добавлен.")
@@ -155,6 +177,7 @@ def open_take_order_window():
         except sqlite3.Error as e:
             messagebox.showerror("Ошибка", f"Ошибка при добавлении заказа: {e}")
 
+    tk.Button(order_win, text="Добавить в заказ", command=add_to_order).pack(pady=5)
     tk.Button(order_win, text="Принять заказ", command=place_order).pack(pady=10)
     tk.Button(order_win, text="Назад", command=order_win.destroy).pack(pady=10)
 

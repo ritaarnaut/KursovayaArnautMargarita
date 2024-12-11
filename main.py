@@ -1,12 +1,17 @@
 import tkinter as tk
-from tkinter import messagebox, filedialog
+from tkinter import messagebox
 import sqlite3
 from admin import open_admin_window
-from client import open_orders_history, open_menu_window
+from client import open_orders_history, open_menu_window, open_personal_data_window, open_write_review_window
 from waiter import open_waiter_window
 
 
 # Авторизация пользователей
+def open_client_window(username):
+    # Когда мы открываем главное окно клиента, вызываем его функцию
+    open_client_main_window(username)
+
+
 def authenticate_user(username, password):
     try:
         with sqlite3.connect("restaurant.db") as conn:
@@ -27,7 +32,6 @@ def authenticate_user(username, password):
                     elif role == "client":
                         messagebox.showinfo("Успех", f"Добро пожаловать, клиент!")
                         open_client_window(username)
-
                     else:
                         messagebox.showerror("Ошибка", "Неизвестная роль пользователя.")
                 else:
@@ -46,16 +50,25 @@ def authenticate_user(username, password):
 
 
 # Функция для открытия окна клиента
-def open_client_window(username):
-    client_window = tk.Toplevel()
-    client_window.title(f"Личный кабинет: {username}")
-    client_window.geometry("400x300")
+def open_client_main_window(username):
+    client_win = tk.Toplevel()
+    client_win.title("Главное меню клиента")
+    client_win.geometry("400x400")
 
-    tk.Label(client_window, text=f"Добро пожаловать, {username}!", font=("Arial", 14)).pack(pady=10)
-    tk.Button(client_window, text="История заказов",
-              command=lambda: open_orders_history(client_window, username)).pack(pady=10)
-    tk.Button(client_window, text="Посмотреть меню", command=open_menu_window).pack(pady=10)
-    tk.Button(client_window, text="Выйти", command=client_window.destroy).pack(pady=10)
+    # Кнопка для просмотра меню
+    tk.Button(client_win, text="Меню", command=open_menu_window).pack(pady=10)
+
+    # Кнопка для просмотра истории заказов
+    tk.Button(client_win, text="История заказов", command=lambda: open_orders_history(client_win, username)).pack(pady=10)
+
+    # Кнопка для просмотра и редактирования личных данных
+    tk.Button(client_win, text="Личные данные", command=lambda: open_personal_data_window(username)).pack(pady=10)
+
+    # Кнопка для написания отзыва
+    tk.Button(client_win, text="Написать отзыв", command=lambda: open_write_review_window(username)).pack(pady=10)
+
+    # Кнопка выхода
+    tk.Button(client_win, text="Выход", command=client_win.destroy).pack(pady=10)
 
 
 # Главное окно (авторизация)

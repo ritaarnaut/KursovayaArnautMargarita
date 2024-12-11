@@ -156,46 +156,86 @@ def open_admin_window():
     menu_button = tk.Button(admin_window, text="Меню", command=open_menu_window)
     menu_button.pack(pady=10)
 
+    tk.Button(admin_window, text="Пользователи", command=open_users_window).pack(pady=10)
+
     report_button = tk.Button(admin_window, text="Скачать отчет", command=download_report)
     report_button.pack(pady=10)
+
+    tk.Button(admin_window, text="Посмотреть отзывы", command=open_reviews_window).pack(pady=10)
 
     back_button = tk.Button(admin_window, text="Выйти", command=admin_window.destroy)
     back_button.pack(pady=10)
 
 
 def open_reviews_window():
-    """Окно для просмотра отзывов администратора."""
+    """Окно для отображения всех отзывов."""
     reviews_win = tk.Toplevel()
-    reviews_win.title("Отзывы клиентов")
-    reviews_win.geometry("600x400")
+    reviews_win.title("Отзывы")
+    reviews_win.geometry("500x500")
 
-    reviews_list = tk.Listbox(reviews_win, width=80, height=15)
+    # Список отзывов
+    reviews_list = tk.Listbox(reviews_win, width=70, height=20)
     reviews_list.pack(pady=10)
 
-    def load_reviews():
-        """Загрузка всех отзывов."""
-        reviews_list.delete(0, tk.END)
-        try:
-            with sqlite3.connect("restaurant.db") as conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT reviews.client_login, orders.order_details, reviews.rating, reviews.review_text "
-                    "FROM reviews JOIN orders ON reviews.order_id = orders.id"
-                )
-                reviews = cursor.fetchall()
-                if reviews:
-                    for review in reviews:
-                        reviews_list.insert(
-                            tk.END,
-                            f"Клиент: {review[0]} | Заказ: {review[1]} | Оценка: {review[2]} | Отзыв: {review[3]}"
-                        )
-                else:
-                    reviews_list.insert(tk.END, "Нет отзывов.")
-        except sqlite3.Error as e:
-            messagebox.showerror("Ошибка", f"Ошибка загрузки отзывов: {e}")
-
-    load_reviews()
+    try:
+        with sqlite3.connect("restaurant.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT r.id, o.order_details, r.rating, r.review_text, r.client_login
+                FROM reviews r
+                JOIN orders o ON r.order_id = o.id
+            """)
+            reviews = cursor.fetchall()
+            if reviews:
+                for review in reviews:
+                    reviews_list.insert(
+                        tk.END,
+                        f"Отзыв №{review[0]} | Заказ: {review[1]} | Оценка: {review[2]} | Отзыв: {review[3]} | Клиент: {review[4]}"
+                    )
+            else:
+                reviews_list.insert(tk.END, "Нет отзывов.")
+    except sqlite3.Error as e:
+        messagebox.showerror("Ошибка", f"Ошибка загрузки отзывов: {e}")
 
     back_button = tk.Button(reviews_win, text="Назад", command=reviews_win.destroy)
     back_button.pack(pady=10)
 
+def open_users_window():
+    users_window = tk.Toplevel()
+    users_window.title("Пользователи")
+    users_window.geometry("600x500")
+
+    # Заголовок
+    tk.Label(users_window, text="Список пользователей", font=("Arial", 14)).pack(pady=10)
+
+    # Список пользователей
+    users_list = tk.Listbox(users_window, width=80, height=15)
+    users_list.pack(pady=10)
+
+    # Загрузка пользователей
+    def load_users():
+        users_list.delete(0, tk.END)
+        try:
+            with sqlite3.connect("restaurant.db") as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT login, first_name, last_name, phone, birth_date, email FROM users WHERE role = 'client'
+                """)
+                users = cursor.fetchall()
+                if users:
+                    for user in users:
+                        users_list.insert(
+                            tk.END,
+                            f"Логин: {user[0]} | Имя: {user[1]} | Фамилия: {user[2]} | Телефон: {user[3]} | Дата рождения: {user[4]} | Почта: {user[5]}"
+                        )
+                else:
+                    users_list.insert(tk.END, "Нет пользователей.")
+        except sqlite3.Error as e:
+            messagebox.showerror("Ошибка", f"Ошибка загрузки пользователей: {e}")
+
+    # Обновляем список пользователей при загрузке
+    load_users()
+
+    # Кнопка назад
+    back_button = tk.Button(users_window, text="Назад", command=users_window.destroy)
+    back_button.pack(pady=10)
